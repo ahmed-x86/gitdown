@@ -109,23 +109,33 @@ def prompt_input(stdscr):
         stdscr.clear()
         max_y, max_x = stdscr.getmaxyx()
         
-        logo_bottom = draw_logo(stdscr, max_y // 4 - 2, max_x)
-        
-        box_w = min(80, max_x - 4)
-        start_x = (max_x - box_w) // 2
-        input_y = logo_bottom + 3
-        
-        stdscr.addstr(input_y, start_x, "   Enter GitHub Repository URL ", curses.color_pair(4) | curses.A_BOLD)
-        
-        stdscr.addstr(input_y + 1, start_x, f"╭{'─' * (box_w-2)}╮", curses.color_pair(5))
-        stdscr.addstr(input_y + 2, start_x, "│ ", curses.color_pair(5))
-        
-        stdscr.addstr(input_y + 2, start_x + 2, input_str.ljust(box_w-4), curses.color_pair(1))
-        
-        stdscr.addstr(input_y + 2, start_x + box_w - 2, " │", curses.color_pair(5))
-        stdscr.addstr(input_y + 3, start_x, f"╰{'─' * (box_w-2)}╯", curses.color_pair(5))
-        
-        stdscr.move(input_y + 2, start_x + 2 + len(input_str))
+        try:
+            if max_y < 12 or max_x < 50:
+                stdscr.addstr(0, 0, " Terminal window is too small! Please resize. ", curses.color_pair(7))
+                stdscr.refresh()
+                stdscr.getch()
+                continue
+
+            logo_bottom = draw_logo(stdscr, max_y // 4 - 2, max_x)
+            
+            box_w = min(80, max_x - 4)
+            start_x = (max_x - box_w) // 2
+            input_y = logo_bottom + 3
+            
+            stdscr.addstr(input_y, start_x, "   Enter GitHub Repository URL ", curses.color_pair(4) | curses.A_BOLD)
+            
+            stdscr.addstr(input_y + 1, start_x, f"╭{'─' * (box_w-2)}╮", curses.color_pair(5))
+            stdscr.addstr(input_y + 2, start_x, "│ ", curses.color_pair(5))
+            
+            stdscr.addstr(input_y + 2, start_x + 2, input_str.ljust(box_w-4), curses.color_pair(1))
+            
+            stdscr.addstr(input_y + 2, start_x + box_w - 2, " │", curses.color_pair(5))
+            stdscr.addstr(input_y + 3, start_x, f"╰{'─' * (box_w-2)}╯", curses.color_pair(5))
+            
+            stdscr.move(input_y + 2, start_x + 2 + len(input_str))
+        except curses.error:
+            pass 
+
         stdscr.refresh()
         
         c = stdscr.getch()
@@ -133,48 +143,57 @@ def prompt_input(stdscr):
             break
         elif c in (curses.KEY_BACKSPACE, 8, 127) and len(input_str) > 0:
             input_str = input_str[:-1]
-        elif 32 <= c <= 126 and len(input_str) < box_w - 5:
+        elif 32 <= c <= 126 and len(input_str) < max_x - 10:
             input_str += chr(c)
             
     curses.curs_set(0)
     return input_str.strip()
 
-def prompt_choice(stdscr, options):
+def prompt_choice(stdscr, options, title):
     current_idx = 0
     while True:
         stdscr.clear()
         max_y, max_x = stdscr.getmaxyx()
         
-        logo_bottom = draw_logo(stdscr, max_y // 4 - 2, max_x)
-        
-        box_w = 46
-        start_x = (max_x - box_w) // 2
-        start_y = logo_bottom + 3
-        
-        stdscr.addstr(start_y, start_x, " 󰧚  Select Download Mode ", curses.color_pair(4) | curses.A_BOLD)
-        
-        stdscr.addstr(start_y + 1, start_x, f"╭{'─' * (box_w-2)}╮", curses.color_pair(5))
-        stdscr.addstr(start_y + 2, start_x, f"│{' ' * (box_w-2)}│", curses.color_pair(5))
-        
-        for i, opt in enumerate(options):
-            icon_label = f"  {opt['icon']}  {opt['label']} ".ljust(box_w - 6)
-            key_str = f"{opt['key']} "
-            y_pos = start_y + 3 + i
+        try:
+            if max_y < 15 or max_x < 50:
+                stdscr.addstr(0, 0, " Terminal window is too small! Please resize. ", curses.color_pair(7))
+                stdscr.refresh()
+                stdscr.getch()
+                continue
+
+            logo_bottom = draw_logo(stdscr, max_y // 4 - 2, max_x)
             
-            if i == current_idx:
-                stdscr.addstr(y_pos, start_x, "│ ", curses.color_pair(5))
-                stdscr.addstr(y_pos, start_x + 2, icon_label, curses.color_pair(7) | curses.A_BOLD)
-                stdscr.addstr(y_pos, start_x + 2 + len(icon_label), key_str, curses.color_pair(9) | curses.A_BOLD)
-                stdscr.addstr(y_pos, start_x + 2 + len(icon_label) + len(key_str), " │", curses.color_pair(5))
-            else:
-                stdscr.addstr(y_pos, start_x, "│ ", curses.color_pair(5))
-                stdscr.addstr(y_pos, start_x + 2, icon_label, curses.color_pair(1))
-                stdscr.addstr(y_pos, start_x + 2 + len(icon_label), key_str, curses.color_pair(3))
-                stdscr.addstr(y_pos, start_x + 2 + len(icon_label) + len(key_str), " │", curses.color_pair(5))
+            box_w = 46
+            start_x = (max_x - box_w) // 2
+            start_y = logo_bottom + 3
+            
+            stdscr.addstr(start_y, start_x, title, curses.color_pair(4) | curses.A_BOLD)
+            
+            stdscr.addstr(start_y + 1, start_x, f"╭{'─' * (box_w-2)}╮", curses.color_pair(5))
+            stdscr.addstr(start_y + 2, start_x, f"│{' ' * (box_w-2)}│", curses.color_pair(5))
+            
+            for i, opt in enumerate(options):
+                icon_label = f"  {opt['icon']}  {opt['label']} ".ljust(box_w - 6)
+                key_str = f"{opt['key']} "
+                y_pos = start_y + 3 + i
                 
-        stdscr.addstr(start_y + 3 + len(options), start_x, f"│{' ' * (box_w-2)}│", curses.color_pair(5))
-        stdscr.addstr(start_y + 4 + len(options), start_x, f"╰{'─' * (box_w-2)}╯", curses.color_pair(5))
-                
+                if i == current_idx:
+                    stdscr.addstr(y_pos, start_x, "│ ", curses.color_pair(5))
+                    stdscr.addstr(y_pos, start_x + 2, icon_label, curses.color_pair(7) | curses.A_BOLD)
+                    stdscr.addstr(y_pos, start_x + 2 + len(icon_label), key_str, curses.color_pair(9) | curses.A_BOLD)
+                    stdscr.addstr(y_pos, start_x + 2 + len(icon_label) + len(key_str), " │", curses.color_pair(5))
+                else:
+                    stdscr.addstr(y_pos, start_x, "│ ", curses.color_pair(5))
+                    stdscr.addstr(y_pos, start_x + 2, icon_label, curses.color_pair(1))
+                    stdscr.addstr(y_pos, start_x + 2 + len(icon_label), key_str, curses.color_pair(3))
+                    stdscr.addstr(y_pos, start_x + 2 + len(icon_label) + len(key_str), " │", curses.color_pair(5))
+                    
+            stdscr.addstr(start_y + 3 + len(options), start_x, f"│{' ' * (box_w-2)}│", curses.color_pair(5))
+            stdscr.addstr(start_y + 4 + len(options), start_x, f"╰{'─' * (box_w-2)}╯", curses.color_pair(5))
+        except curses.error:
+            pass
+            
         stdscr.refresh()
         
         c = stdscr.getch()
@@ -335,12 +354,12 @@ def generate_links_file(owner, repo, branch, tree_items, selected_paths, out_fil
             f.write("-" * 70 + "\n")
     return True
 
-def run_download_ui(stdscr):
+def run_download_ui(stdscr, downloader_tool):
     max_y, max_x = stdscr.getmaxyx()
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     
-    p = subprocess.Popen(["./ghdown.py", "-in", "links.txt"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
+    p = subprocess.Popen(["./ghdown.py", "-in", "links.txt", "-d", downloader_tool], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
     
     box_w = min(80, max_x - 4)
     box_y = max_y - 6
@@ -354,25 +373,31 @@ def run_download_ui(stdscr):
         line = line.strip()
         if line:
             stdscr.clear()
-            draw_logo(stdscr, 2, max_x)
-            
-            stdscr.addstr(box_y - 1, start_x, "   Downloading Files... ", curses.color_pair(4) | curses.A_BOLD)
-            
-            display_line = line
-            if len(display_line) > box_w - 4:
-                display_line = display_line[:box_w-7] + "..."
+            try:
+                draw_logo(stdscr, 2, max_x)
                 
-            stdscr.addstr(box_y, start_x, f"╭{'─' * (box_w-2)}╮", curses.color_pair(5))
-            stdscr.addstr(box_y + 1, start_x, "│ ", curses.color_pair(5))
-            stdscr.addstr(box_y + 1, start_x + 2, display_line.ljust(box_w-4), curses.color_pair(1))
-            stdscr.addstr(box_y + 1, start_x + box_w - 2, " │", curses.color_pair(5))
-            stdscr.addstr(box_y + 2, start_x, f"╰{'─' * (box_w-2)}╯", curses.color_pair(5))
+                stdscr.addstr(box_y - 1, start_x, "   Downloading Files... ", curses.color_pair(4) | curses.A_BOLD)
+                
+                display_line = line
+                if len(display_line) > box_w - 4:
+                    display_line = display_line[:box_w-7] + "..."
+                    
+                stdscr.addstr(box_y, start_x, f"╭{'─' * (box_w-2)}╮", curses.color_pair(5))
+                stdscr.addstr(box_y + 1, start_x, "│ ", curses.color_pair(5))
+                stdscr.addstr(box_y + 1, start_x + 2, display_line.ljust(box_w-4), curses.color_pair(1))
+                stdscr.addstr(box_y + 1, start_x + box_w - 2, " │", curses.color_pair(5))
+                stdscr.addstr(box_y + 2, start_x, f"╰{'─' * (box_w-2)}╯", curses.color_pair(5))
+            except curses.error:
+                pass
             
             stdscr.refresh()
             
     stdscr.clear()
-    draw_logo(stdscr, max_y // 4 - 2, max_x)
-    stdscr.addstr(max_y // 2 + 2, (max_x - 23) // 2, "   Download Complete! ", curses.color_pair(2) | curses.A_BOLD)
+    try:
+        draw_logo(stdscr, max_y // 4 - 2, max_x)
+        stdscr.addstr(max_y // 2 + 2, (max_x - 23) // 2, "   Download Complete! ", curses.color_pair(2) | curses.A_BOLD)
+    except curses.error:
+        pass
     stdscr.refresh()
     curses.napms(1500)
 
@@ -389,21 +414,33 @@ def main_tui(stdscr):
         stdscr.getch()
         return
 
-    menu_options = [
+    mode_options = [
         {"icon": "", "label": "Full Repository Download", "key": "f"},
         {"icon": "󰒉", "label": "Manual Selection (TUI)", "key": "m"}
     ]
+    mode_idx = prompt_choice(stdscr, mode_options, " 󰧚  Select Download Mode ")
     
-    mode = prompt_choice(stdscr, menu_options)
+    downloader_options = [
+        {"icon": "󰆚", "label": "curl (Recommended)", "key": "c"},
+        {"icon": "󰖟", "label": "wget", "key": "w"},
+        {"icon": "󰋊", "label": "aria2 (Multi-thread)", "key": "a"},
+        {"icon": "󰌠", "label": "urllib (Built-in Python)", "key": "u"}
+    ]
+    tools_list = ["curl", "wget", "aria2", "urllib"]
+    tool_idx = prompt_choice(stdscr, downloader_options, "   Select Downloader Tool ")
+    selected_tool = tools_list[tool_idx]
     
     stdscr.clear()
-    draw_logo(stdscr, stdscr.getmaxyx()[0] // 4 - 2, stdscr.getmaxyx()[1])
-    stdscr.addstr(stdscr.getmaxyx()[0] // 2 + 2, (stdscr.getmaxyx()[1] - 18) // 2, "   Fetching tree... ", curses.color_pair(4) | curses.A_BOLD)
+    try:
+        draw_logo(stdscr, stdscr.getmaxyx()[0] // 4 - 2, stdscr.getmaxyx()[1])
+        stdscr.addstr(stdscr.getmaxyx()[0] // 2 + 2, (stdscr.getmaxyx()[1] - 18) // 2, "   Fetching tree... ", curses.color_pair(4) | curses.A_BOLD)
+    except curses.error:
+        pass
     stdscr.refresh()
 
-    if mode == 0:
+    if mode_idx == 0:
         subprocess.run(["./ghls.py", "-link", url, "-out", "links.txt"])
-        run_download_ui(stdscr)
+        run_download_ui(stdscr, selected_tool)
     else:
         branch, tree_items = fetch_tree_data(owner, repo)
         if not branch:
@@ -412,7 +449,7 @@ def main_tui(stdscr):
         selected = tui_loop(stdscr, owner, repo, branch, tree_items)
         if selected:
             if generate_links_file(owner, repo, branch, tree_items, selected, "links.txt"):
-                run_download_ui(stdscr)
+                run_download_ui(stdscr, selected_tool)
 
 if __name__ == "__main__":
     curses.wrapper(main_tui)
